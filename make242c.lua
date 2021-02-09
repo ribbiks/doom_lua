@@ -59,9 +59,15 @@ for i=1, #linedefs do
 	end
 end
 
+-- by default suggest that we build control sectors at position where the user clicked to start the script
+p = Pen.FromClick()
+p.snaptogrid = true
+default_x = p.position.x
+default_y = p.position.y
+
 -- get parameters
-UI.AddParameter("x_offset",    "where to build control sectors (x)", 0)
-UI.AddParameter("y_offset",    "where to build control sectors (y)", 0)
+UI.AddParameter("x_offset",    "where to build control sectors (x)", default_x)
+UI.AddParameter("y_offset",    "where to build control sectors (y)", default_y)
 UI.AddParameter("tag_offset",  "starting tag #", tostring(max_tag+1))
 UI.AddParameter("fake_floor",  "fake floor height", "-")
 UI.AddParameter("fake_ceil",   "fake ceiling height", "-")
@@ -99,5 +105,5 @@ end
 
 -- draw the rest of the owl
 for i=1, #fh_list do
-	draw_square(((i-1)%SQ_COLS)*BUFF+p1, math.floor(i/SQ_COLS)*BUFF+p2, fh_list[i], ch_list[i], tg_list[i], c0, c1, c2)
+	draw_square( BUFF*((i-1)%SQ_COLS)+p0, -BUFF*math.floor((i-1)/SQ_COLS)+p1, fh_list[i], ch_list[i], tg_list[i], c0, c1, c2 )
 end

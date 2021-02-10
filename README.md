@@ -19,3 +19,7 @@ A collection of scripts for Doom Builder X or the lua fork of Ultimate Doom Buil
 
 * Apply fake floor, ceiling, and colormap effects to all selected sectors.
 * [Example usage](https://youtu.be/Vpt8MCL1u7U)
+
+### squarifier.lua
+
+* "Squarifies" all selected linedefs.

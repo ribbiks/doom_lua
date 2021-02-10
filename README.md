@@ -1,6 +1,11 @@
 # doom_lua
 A collection of scripts for Doom Builder X or the lua fork of Ultimate Doom Builder
 
+### bevel.lua
+
+* Adds bevels to the intersection of all selected linedefs.
+* I've mostly tested this on 1S linedefs drawn in the void, I can't vouch for it behaving well with more complicated selections.
+
 ### circularizer.lua
 
 * Transform a map from a rectangle into a ring.

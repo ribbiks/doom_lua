@@ -35,37 +35,48 @@ function delete_stuff(lines, verts)
 	end
 end
 
-function log_factorial(n)
-	result = 0
-	for i=1,n do
-		result = result + math.log(i)
-	end
-	return result
-end
-
-function nCk(n, k)
-	if k == 1 then return n end
-	if n == k then return 1 end
-	if k == 0 then return 1 end
-	if k > n or n <= 0 or k < 0 then
-		UI.LogLine("bad nCk: " .. tostring(n) .. " " .. tostring(k))
-	end
-	return math.exp( log_factorial(n) - log_factorial(k) - log_factorial(n-k) )
-end
-
-function bezier(verts, n_points)
+-- cubic spline using finite-difference tangents
+function spline(verts, n_points)
 	v = {}
 	for i=1,#verts do
 		v[i] = verts[i].position
 	end
+	-- estimate arc length (and thus how many points to allocate to each cubic)
+	arc_len = {}
+	tot_len = 0
+	for i=1,#v-1 do
+		d = v[i+1]-v[i]
+		arc_len[#arc_len+1] = d.GetLength()
+		tot_len = tot_len + arc_len[#arc_len]
+	end
+	points_per_arc = {}
+	for i=1,#v-1 do
+		points_per_arc[i] = math.ceil(n_points*(arc_len[i]/tot_len))
+	end
+	-- compute tangents (apparently I shouldn't normalize them)
+	m = {}
+	m[1] = (v[2]-v[1])--/((v[2]-v[1]).GetLength())
+	for i=2,#v-1 do
+		d1 = (v[i+1]-v[i])--/((v[i+1]-v[i]).GetLength())
+		d2 = (v[i]-v[i-1])--/((v[i]-v[i-1]).GetLength())
+		m[i] = 0.5*(d1+d2)
+	end
+	m[#v] = (v[#v]-v[#v-1])--/((v[#v]-v[#v-1]).GetLength())
+	-- cubics
 	points = {}
-	for i=1,n_points do
-		t   = i/n_points
-		omt = 1 - t
-		points[i] = 0
-		n = #verts - 1
-		for j=0,n do
-			points[i] = points[i] + nCk(n,j)*(omt^(n-j))*(t^j)*v[j+1]
+	for i=1,#v-1 do
+		p0 = v[i]
+		m0 = m[i]
+		p1 = v[i+1]
+		m1 = m[i+1]
+		for j=0,points_per_arc[i] do
+			t  = j/(points_per_arc[i]+1)
+			t1 =  2*(t^3) - 3*(t^2) + 1
+			t2 =  1*(t^3) - 2*(t^2) + t
+			t3 = -2*(t^3) + 3*(t^2)
+			t4 =  1*(t^3) - 1*(t^2)
+			points[#points+1] = t1*p0 + t2*m0 + t3*p1 + t4*m1
+			--UI.LogLine("i: " .. tostring(i) .. ", t: " .. tostring(t) .. " (" .. tostring(points_per_arc[i]) .. "), " .. tostring(points[#points].x) .. " " .. tostring(points[#points].y))
 		end
 	end
 	return points
@@ -85,8 +96,9 @@ parameters = UI.AskForParameters()
 np = tonumber(parameters.n_points)
 dl = tonumber(parameters.del_scaf)
 
-points_to_draw = bezier(verts, np)
+points_to_draw = spline(verts, np)
 p0 = verts[1].position
+pn = verts[#verts].position
 if dl > 0 then
 	delete_stuff(Map.GetSelectedLinedefs(), Map.GetSelectedVertices())
 end
@@ -94,8 +106,9 @@ end
 p  = Pen.From(p0.x, p0.y)
 p.snaptogrid  = false
 p.stitchrange = 1
-p.DrawVertexAt(p0)
+--p.DrawVertexAt(p0)
 for i=1,#points do
 	p.DrawVertexAt(points[i])
 end
+p.DrawVertexAt(pn)
 p.FinishPlacingVertices()

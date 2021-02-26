@@ -8,7 +8,7 @@ A collection of scripts for Doom Builder X or the lua fork of Ultimate Doom Buil
 
 ### bezier.lua
 
-* Draws a bezier curve between selected vertices.
+* Draws a bezier curve through selected vertices.
 
 ### circularizer.lua
 
@@ -31,7 +31,11 @@ A collection of scripts for Doom Builder X or the lua fork of Ultimate Doom Buil
 
 ### select_overlapping_monsters.lua
 
-* Does what it says on the tin.
+* Selects monsters that are stuck on each other (overlapping bounding box and same difficulty)
+
+### spline.lua
+
+* Interpolates a cubic spline through selected vertices.
 
 ### squarifier.lua
 

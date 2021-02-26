@@ -1,4 +1,40 @@
 
+function has_vec2d(tab, val)
+	for index, value in ipairs(tab) do
+		if value.x == val.x and value.y == val.y then
+			return true
+		end
+	end
+	return false
+end
+
+--
+-- this is slow and horrible because apparently you can't rely
+-- on vertex indices staying sensible whilst deleting things
+--
+function delete_stuff(lines, verts)
+	v_pos = {}
+	for i=1,#lines do
+		v_pos[#v_pos+1] = lines[i].start_vertex.position
+		v_pos[#v_pos+1] = lines[i].end_vertex.position
+	end
+	for i=1,#verts do
+		v_pos[#v_pos+1] = verts[i].position
+	end
+	still_going = #v_pos
+	while still_going > 0 do
+		still_going = 0
+		verts = Map.GetVertices()
+		for i=1,#verts do
+			if has_vec2d(v_pos, verts[i].position) == true then
+				verts[i].Dispose()
+				still_going = 1
+				break
+			end
+		end
+	end
+end
+
 function log_factorial(n)
 	result = 0
 	for i=1,n do
@@ -43,13 +79,16 @@ if #verts < 2 then
 end
 
 UI.AddParameter("n_points", "number of points", 32)
+UI.AddParameter("del_scaf", "delete selected verts? (0=no, 1=yes)", 1)
 parameters = UI.AskForParameters()
 
 np = tonumber(parameters.n_points)
+dl = tonumber(parameters.del_scaf)
 
 points_to_draw = bezier(verts, np)
+p0             = verts[1].position
+delete_stuff(Map.GetSelectedLinedefs(), Map.GetSelectedVertices())
 
-p0 = verts[1].position
 p  = Pen.From(p0.x, p0.y)
 p.snaptogrid  = false
 p.stitchrange = 1

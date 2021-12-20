@@ -22,7 +22,7 @@ function get_sector_index_from_linedef_coords(sectorList, linedefList, vpos1, vp
 	return mySector.GetIndex()+1 --- +1 because sector indices are 0-indexed
 end
 
-function draw_launcher(x, y, tag_offset, fh, ch)
+function draw_launcher(x, y, tag_offset, fh, ch, game_type)
 	local p = Pen.From(x,y)
 	p.snaptogrid  = false
 	p.stitchrange = 1
@@ -99,8 +99,13 @@ function draw_launcher(x, y, tag_offset, fh, ch)
 	--- add things
 	local newThing1 = Map.InsertThing(x+32, y-32)
 	local newThing2 = Map.InsertThing(x+32, y-96)
-	newThing1.type  = 70
-	newThing2.type  = 84
+	if game_type == 'wormwood' then
+		newThing1.type  = 70
+		newThing2.type  = 84
+	elseif game_type == 'jumpwad' then
+		newThing1.type  = 70
+		newThing2.type  = 41
+	end
 	newThing1.SetAngleDoom(270)
 	newThing2.SetAngleDoom(270)
 end
@@ -212,6 +217,7 @@ UI.AddParameter("tag_offset",   "starting tag #", tostring(max_tag+1))
 UI.AddParameter("floor_height", "floor height to shoot meteors at", 0)
 UI.AddParameter("ceil_height",  "ceil height of launcher", 64)
 UI.AddParameter("closet_speed", "242-scroller speed for meteors", 768)
+UI.AddParameter("closet_type",  "jumpwad/wormwood", "jumpwad")
 parameters = UI.AskForParameters()
 p0 = tonumber(parameters.x_offset)
 p1 = tonumber(parameters.y_offset)
@@ -219,8 +225,13 @@ p2 = tonumber(parameters.tag_offset)
 p3 = tonumber(parameters.floor_height)
 p4 = tonumber(parameters.ceil_height)
 p5 = tonumber(parameters.closet_speed)
+p6 = tostring(parameters.closet_type)
 
--- get drawing!!!
-draw_launcher(p0, p1, p2, p3, p4)
-draw_voodoo(p0+128, p1, p2)
-draw_scroller(p0+256, p1, p2, p5)
+if p6 ~= "wormwood" and p6 ~= "jumpwad" then
+	UI.LogLine("closet type must be jumpwad or wormwood")
+else
+	-- get drawing!!!
+	draw_launcher(p0, p1, p2, p3, p4, p6)
+	draw_voodoo(p0+128, p1, p2)
+	draw_scroller(p0+256, p1, p2, p5)
+end

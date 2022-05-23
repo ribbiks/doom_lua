@@ -34,6 +34,14 @@ A collection of scripts for Doom Builder X or the lua fork of Ultimate Doom Buil
 * Apply fake floor, ceiling, and colormap effects to all selected sectors.
 * [Example usage](https://youtu.be/Vpt8MCL1u7U)
 
+### meteor_prefab.lua
+
+* Draws meteor launching machinery as used in wormwood3.wad and jumpwad.wad
+
+### print_used_tag_ranges.lua
+
+* Prints a concise list of all the tags used in the selected linedefs/sectors.
+
 ### select_overlapping_monsters.lua
 
 * Selects monsters that are stuck on each other (overlapping bounding box and same difficulty)
@@ -45,3 +53,7 @@ A collection of scripts for Doom Builder X or the lua fork of Ultimate Doom Buil
 ### squarifier.lua
 
 * "Squarifies" all selected linedefs.
+
+### randomly_select_things.lua
+
+* Randomly selects a specified fraction of selected things.

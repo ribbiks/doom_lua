@@ -46,6 +46,11 @@ A collection of scripts for Doom Builder X or the lua fork of Ultimate Doom Buil
 
 * Selects monsters that are stuck on each other (overlapping bounding box and same difficulty)
 
+### shuffle_tags.lua
+
+* Randomly shuffle the tag values of selected linedefs/sectors.
+* What could this possibly be useful for??
+
 ### spline.lua
 
 * Interpolates a cubic spline through selected vertices.

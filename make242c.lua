@@ -17,10 +17,52 @@ function get_sector_index_from_linedef_coords(sectorList, linedefList, vpos1, vp
 	return mySector.GetIndex()+1 -- +1 because sector indices are 0-indexed
 end
 
+function get_sector_index_from_linedef_coords_back(sectorList, linedefList, vpos1, vpos2)
+	local lInd     = get_linedef_index(linedefList, vpos1, vpos2)
+	local myBack  = linedefList[lInd].GetBack()
+	local mySector = myBack.GetSector()
+	return mySector.GetIndex()+1 --- +1 because sector indices are 0-indexed
+end
+
+function get_sector_details(my_sector)
+	local f  = my_sector.floorheight
+	local c  = my_sector.ceilheight
+	local b  = my_sector.brightness
+	local t  = my_sector.tag
+	local e  = my_sector.effect
+	local ft = my_sector.floortex
+	local ct = my_sector.ceiltex
+	return {f, c, b, t, e, ft, ct}
+end
+
+function sectors_are_same(details1, details2)
+	for i=1, #details1 do
+		if details1[i] ~= details2[i] then return false end
+	end
+	return true
+end
+
+function spairs(t, order)
+	local keys = {}
+	for k in pairs(t) do keys[#keys+1] = k end
+	if order then
+		table.sort(keys, function(a,b) return order(t, a, b) end)
+	else
+		table.sort(keys)
+	end
+	local i = 0
+	return function()
+		i = i + 1
+		if keys[i] then
+			return keys[i], t[keys[i]]
+		end
+	end
+end
+
 SQ_SIZE = 16
 SQ_COLS = 32
 BUFF    = 2*SQ_SIZE
-function draw_square(x ,y, s_floor, s_ceil, s_tag, c_lower, c_middle, c_upper)
+function draw_square(x ,y, s_floor, s_ceil, s_tag, c_lower, c_middle, c_upper, join_vpos)
 	local p = Pen.From(x,y)
 	p.snaptogrid  = false
 	p.stitchrange = 1
@@ -42,6 +84,14 @@ function draw_square(x ,y, s_floor, s_ceil, s_tag, c_lower, c_middle, c_upper)
 	allLinedefs[lInd].action     = 242
 	allLinedefs[lInd].GetFront().midtex = c_middle
 	allLinedefs[lInd].tag = s_tag
+	--
+	if #join_vpos > 0 then
+		local jInd = get_sector_index_from_linedef_coords(allSectors, allLinedefs, join_vpos[1], join_vpos[2])
+		if sectors_are_same(join_vpos[3], get_sector_details(allSectors[jInd])) == false then
+			jInd = get_sector_index_from_linedef_coords_back(allSectors, allLinedefs, join_vpos[1], join_vpos[2])
+		end
+		Map.JoinSectors({allSectors[jInd], allSectors[sInd]}) -- j first so that original tag is used
+	end
 end
 
 -- by default suggest that we start at the highest tag + 1
@@ -91,19 +141,45 @@ sectors = Map.GetSelectedSectors()
 fh_list = {}
 ch_list = {}
 tg_list = {}
+jn_list = {}
 current_tag = p2
 for i=1, #sectors do
 	fh_list[i] = sectors[i].floorheight
 	ch_list[i] = sectors[i].ceilheight
-	tg_list[i] = current_tag
-	sectors[i].tag = current_tag
-	current_tag = current_tag + 1
+	if sectors[i].tag == 0 then
+		tg_list[i]     = current_tag
+		sectors[i].tag = current_tag
+		current_tag    = current_tag + 1
+		jn_list[i]     = {}
+	else
+		tg_list[i]  = sectors[i].tag
+		my_sidedefs = sectors[i].GetSidedefs()
+		rep_linedef = my_sidedefs[1].GetLinedef() -- ignoring the pathological case where a sector has no linedefs that reference it
+		vp1 = rep_linedef.start_vertex.position
+		vp2 = rep_linedef.end_vertex.position
+		jn_list[i] = {vp1, vp2, get_sector_details(sectors[i])}
+	end
 	-- change to fake floor/ceil, if specified
 	if f0 ~= "-" then sectors[i].floorheight = f0 end
 	if f1 ~= "-" then sectors[i].ceilheight = f1 end
 end
 
+-- warn if multiple sectors have same tag
+tag_count = {}
+for i=1, #tg_list do
+	if tag_count[tg_list[i]] == nil then
+		tag_count[tg_list[i]] = 0
+	else
+		tag_count[tg_list[i]] = 1
+	end
+end
+for k, v in spairs(tag_count) do
+	if v == 1 then
+		UI.LogLine("warning: multiple sectors with tag " .. tostring(k))
+	end
+end
+
 -- draw the rest of the owl
 for i=1, #fh_list do
-	draw_square( BUFF*((i-1)%SQ_COLS)+p0, -BUFF*math.floor((i-1)/SQ_COLS)+p1, fh_list[i], ch_list[i], tg_list[i], c0, c1, c2 )
+	draw_square( BUFF*((i-1)%SQ_COLS)+p0, -BUFF*math.floor((i-1)/SQ_COLS)+p1, fh_list[i], ch_list[i], tg_list[i], c0, c1, c2, jn_list[i] )
 end
